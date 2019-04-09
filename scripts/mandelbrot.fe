@@ -1,0 +1,35 @@
+; printed output should be written to a .pgm file
+
+(do
+  (let width  500)
+  (let height 300)
+  (let maxiter 16)
+
+  ; write header
+  (print "P2")
+  (print width height)
+  (print maxiter)
+
+  ; write pixels
+  (let ypixel 0)
+  (while (< ypixel height)
+    (let y (- (/ ypixel (/ height 2)) 1))
+    (let xpixel 0)
+    (while (< xpixel width)
+      (let x (- (/ xpixel (/ width 3)) 2))
+      (let x0 x)
+      (let y0 y)
+      (let iter 0)
+      (while (and (< iter maxiter) (<= (+ (* x0 x0) (* y0 y0)) 4))
+        (let x1 (+ (- (* x0 x0) (* y0 y0)) x))
+        (let y1 (+ (* 2 x0 y0) y))
+        (= x0 x1)
+        (= y0 y1)
+        (= iter (+ iter 1))
+      )
+      (print iter)
+      (= xpixel (+ xpixel 1))
+    )
+    (= ypixel (+ ypixel 1))
+  )
+)

@@ -1,0 +1,112 @@
+(= nth (fn (n lst)
+  (while (< 0 n)
+    (= n (- n 1))
+    (= lst (cdr lst)))
+  (if (is n 0) (car lst))
+))
+
+
+(= rev (fn (lst)
+  (let res nil)
+  (while lst
+    (= res (cons (car lst) res))
+    (= lst (cdr lst))
+  )
+  res
+))
+
+
+(= map (fn (f lst)
+  (let res nil)
+  (while lst
+    (= res (cons (f (car lst)) res))
+    (= lst (cdr lst))
+  )
+  (rev res)
+))
+
+
+(= print-grid (fn (grid)
+  (map
+    (fn (row)
+      (print (map (fn (x) (if (is x 0) '- '#)) row))
+    )
+    grid
+  )
+))
+
+
+(= get-cell (fn (grid x y)
+  (or (nth x (nth y grid)) 0)
+))
+
+
+(= next-cell (fn (grid cell x y)
+  (let n (+
+    (get-cell grid (- x 1)  (- y 1))
+    (get-cell grid (- x 1)  y      )
+    (get-cell grid (- x 1)  (+ y 1))
+    (get-cell grid x        (- y 1))
+    (get-cell grid x        (+ y 1))
+    (get-cell grid (+ x 1)  (- y 1))
+    (get-cell grid (+ x 1)  y      )
+    (get-cell grid (+ x 1)  (+ y 1))
+  ))
+  (if
+    (and (is cell 1) (or (is n 2) (is n 3))) 1
+    (and (is cell 0) (is n 3)) 1
+    0
+  )
+))
+
+
+(= next-grid (fn (grid)
+  (let y -1)
+  (map
+    (fn (row)
+      (= y (+ y 1))
+      (let x -1)
+      (map
+        (fn (cell)
+          (= x (+ x 1))
+          (next-cell grid cell x y)
+        )
+        row
+      )
+    )
+    grid
+  )
+))
+
+
+(= life (fn (n grid)
+  (let i 1)
+  (while (<= i n)
+    (print ">> iteration" i)
+    (print-grid grid)
+    (print)
+    (= grid (next-grid grid))
+    (= i (+ i 1))
+  )
+))
+
+
+; blinker in a 3x3 universe
+(life 5 '(
+  (0 1 0)
+  (0 1 0)
+  (0 1 0)
+))
+
+
+; glider in an 8x8 universe
+(life 22 '(
+  (0 0 1 0 0 0 0 0)
+  (0 0 0 1 0 0 0 0)
+  (0 1 1 1 0 0 0 0)
+  (0 0 0 0 0 0 0 0)
+  (0 0 0 0 0 0 0 0)
+  (0 0 0 0 0 0 0 0)
+  (0 0 0 0 0 0 0 0)
+  (0 0 0 0 0 0 0 0)
+))
