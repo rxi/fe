@@ -1,0 +1,27 @@
+
+
+(= push (mac (val lst)
+  (list '= lst (list 'cons val lst))
+))
+
+
+(= for (mac (item lst . body)
+  (list 'do
+    (list 'let 'for-iter lst)
+    (list 'while 'for-iter
+      (list 'let item '(car for-iter))
+      '(= for-iter (cdr for-iter))
+      (cons 'do body)
+    )
+  )
+))
+
+
+(= items (list "cat" "dog" "fox"))
+
+(push "owl" items)
+(push "cow" items)
+
+(for x items
+  (print ">" x)
+)
