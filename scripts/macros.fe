@@ -1,5 +1,3 @@
-
-
 (= push (mac (val lst)
   (list '= lst (list 'cons val lst))
 ))
