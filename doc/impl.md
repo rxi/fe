@@ -53,7 +53,7 @@ symbol. Symbols are interned.
 Numbers store a `Number` in the `cdr` part of the `object`. By default
 `Number` is a `float`, but any value can be used so long as it is equal
 or smaller in size than an `object` pointer. If a different type of
-value is used, `lsp_read()` and `lsp_write()` must also be updated to
+value is used, `fe_read()` and `fe_write()` must also be updated to
 handle the new type correctly.
 
 ##### Prim
@@ -65,7 +65,7 @@ CFuncs store a `CFunc` pointer in the `cdr` part of the `object`.
 ##### Ptr
 Ptrs store a `void` pointer in the `cdr` part of the `object`. The handler
 functions `gc` and `mark` are called whenever a `ptr` is collected or marked by
-the garbage collector — the set `lsp_CFunc` is passed the object itself in place
+the garbage collector — the set `fe_CFunc` is passed the object itself in place
 of an arguments list.
 
 
@@ -128,7 +128,7 @@ stack.
 
 
 ## Error Handling
-If an error occurs the `lsp_error()` function is called — this function resets
+If an error occurs the `fe_error()` function is called — this function resets
 the `context` to a safe state and calls the `error` handler if one is set. The
 error handler function is passed the error message and list representing the
 call stack (*both these values are valid only for this function*). The error
