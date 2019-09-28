@@ -573,6 +573,7 @@ static fe_Object* dolist(fe_Context *ctx, fe_Object *lst, fe_Object *env) {
   int save = fe_savegc(ctx);
   while (!isnil(lst)) {
     fe_restoregc(ctx, save);
+    fe_pushgc(ctx, lst);
     fe_pushgc(ctx, env);
     res = eval(ctx, fe_nextarg(ctx, &lst), env, &env);
   }
