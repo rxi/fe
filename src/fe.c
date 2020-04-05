@@ -617,11 +617,8 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
   fe_Object cl, *va, *vb;
   int n, gc;
 
-  switch (type(obj)) {
-    case FE_TSYMBOL: return cdr(getbound(obj, env));
-    case FE_TPAIR: break;
-    default: return obj;
-  }
+  if (type(obj) == FE_TSYMBOL) { return cdr(getbound(obj, env)); }
+  if (type(obj) != FE_TPAIR) { return obj; }
 
   car(&cl) = obj, cdr(&cl) = ctx->calllist;
   ctx->calllist = &cl;
