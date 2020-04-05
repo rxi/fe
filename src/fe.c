@@ -202,10 +202,10 @@ static int equal(fe_Object *a, fe_Object *b) {
   if (type(a) != type(b)) { return 0; }
   if (type(a) == FE_TNUMBER) { return number(a) == number(b); }
   if (type(a) == FE_TSTRING) {
-    for (; !isnil(a) && !isnil(b); a = cdr(a), b = cdr(b)) {
+    for (; !isnil(a); a = cdr(a), b = cdr(b)) {
       if (car(a) != car(b)) { return 0; }
     }
-    return isnil(a) && isnil(b);
+    return a == b;
   }
   return 0;
 }
