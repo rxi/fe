@@ -794,9 +794,6 @@ fe_Context* fe_open(void *ptr, int size) {
   ptr = (char*) ptr + sizeof(fe_Context);
   size -= sizeof(fe_Context);
 
-  /* make sure object memory region is 32bit aligned */
-  while ((size_t) ptr & 0x3) { ptr = (char*) ptr + 1; size--; }
-
   /* init objects memory region */
   ctx->objects = (fe_Object*) ptr;
   ctx->object_count = size / sizeof(fe_Object);
