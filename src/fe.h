@@ -8,9 +8,6 @@
 #ifndef FE_H
 #define FE_H
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #define FE_VERSION "1.0"
 
 typedef float fe_Number;

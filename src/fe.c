@@ -20,14 +20,22 @@
 ** IN THE SOFTWARE.
 */
 
+#ifdef __plan9__
+#include <u.h>
+#include <libc.h>
+#define unused USED
+#else
 #include <string.h>
+#include <stdlib.h>
+#define unused(x) ( (void) (x) )
+#endif
+#include <stdio.h>
 #include "fe.h"
 
-#define unused(x)     ( (void) (x) )
 #define car(x)        ( (x)->car.o )
 #define cdr(x)        ( (x)->cdr.o )
 #define tag(x)        ( (x)->car.c )
-#define isnil(x)      ( (x) == &nil )
+#define isnil(x)      ( (x) == &Nil )
 #define type(x)       ( tag(x) & 0x1 ? tag(x) >> 2 : FE_TPAIR )
 #define settype(x,t)  ( tag(x) = (t) << 2 | 1 )
 #define number(x)     ( (x)->cdr.n )
@@ -74,7 +82,7 @@ struct fe_Context {
   int nextchr;
 };
 
-static fe_Object nil = {{ (void*) (FE_TNIL << 2 | 1) }, { NULL }};
+static fe_Object Nil = {{ (void*) (FE_TNIL << 2 | 1) }, { NULL }};
 
 
 fe_Handlers* fe_handlers(fe_Context *ctx) {
@@ -85,7 +93,7 @@ fe_Handlers* fe_handlers(fe_Context *ctx) {
 void fe_error(fe_Context *ctx, const char *msg) {
   fe_Object *cl = ctx->calllist;
   /* reset context state */
-  ctx->calllist = &nil;
+  ctx->calllist = &Nil;
   /* do error handler */
   if (ctx->handlers.error) { ctx->handlers.error(ctx, msg, cl); }
   /* error handler returned -- print error and traceback, exit */
@@ -95,7 +103,11 @@ void fe_error(fe_Context *ctx, const char *msg) {
     fe_tostring(ctx, car(cl), buf, sizeof(buf));
     fprintf(stderr, "=> %s\n", buf);
   }
+#ifdef __plan9__
+  exits("fail");
+#else
   exit(EXIT_FAILURE);
+#endif
 }
 
 
@@ -248,7 +260,7 @@ fe_Object* fe_cons(fe_Context *ctx, fe_Object *car, fe_Object *cdr) {
 
 
 fe_Object* fe_bool(fe_Context *ctx, int b) {
-  return b ? ctx->t : &nil;
+  return b ? ctx->t : &Nil;
 }
 
 
@@ -262,7 +274,7 @@ fe_Object* fe_number(fe_Context *ctx, fe_Number n) {
 
 static fe_Object* buildstring(fe_Context *ctx, fe_Object *tail, int chr) {
   if (!tail || strbuf(tail)[STRBUFSIZE - 1] != '\0') {
-    fe_Object *obj = fe_cons(ctx, NULL, &nil);
+    fe_Object *obj = fe_cons(ctx, NULL, &Nil);
     settype(obj, FE_TSTRING);
     if (tail) {
       cdr(tail) = obj;
@@ -296,7 +308,7 @@ fe_Object* fe_symbol(fe_Context *ctx, const char *name) {
   /* create new object, push to symlist and return */
   obj = object(ctx);
   settype(obj, FE_TSYMBOL);
-  cdr(obj) = fe_cons(ctx, fe_string(ctx, name), &nil);
+  cdr(obj) = fe_cons(ctx, fe_string(ctx, name), &Nil);
   ctx->symlist = fe_cons(ctx, obj, ctx->symlist);
   return obj;
 }
@@ -319,7 +331,7 @@ fe_Object* fe_ptr(fe_Context *ctx, void *ptr) {
 
 
 fe_Object* fe_list(fe_Context *ctx, fe_Object **objs, int n) {
-  fe_Object *res = &nil;
+  fe_Object *res = &Nil;
   while (n--) {
     res = fe_cons(ctx, objs[n], res);
   }
@@ -447,7 +459,7 @@ static fe_Object* getbound(fe_Object *sym, fe_Object *env) {
 
 void fe_set(fe_Context *ctx, fe_Object *sym, fe_Object *v) {
   unused(ctx);
-  cdr(getbound(sym, &nil)) = v;
+  cdr(getbound(sym, &Nil)) = v;
 }
 
 
@@ -481,7 +493,7 @@ static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
       return &rparen;
 
     case '(':
-      res = &nil;
+      res = &Nil;
       tail = &res;
       gc = fe_savegc(ctx);
       fe_pushgc(ctx, res); /* to cause error on too-deep nesting */
@@ -492,7 +504,7 @@ static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
           *tail = fe_read(ctx, fn, udata);
         } else {
           /* proper pair */
-          *tail = fe_cons(ctx, v, &nil);
+          *tail = fe_cons(ctx, v, &Nil);
           tail = &cdr(*tail);
         }
         fe_restoregc(ctx, gc);
@@ -503,7 +515,7 @@ static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
     case '\'':
       v = fe_read(ctx, fn, udata);
       if (!v) { fe_error(ctx, "stray '''"); }
-      return fe_cons(ctx, fe_symbol(ctx, "quote"), fe_cons(ctx, v, &nil));
+      return fe_cons(ctx, fe_symbol(ctx, "quote"), fe_cons(ctx, v, &Nil));
 
     case '"':
       res = buildstring(ctx, NULL, '\0');
@@ -531,7 +543,7 @@ static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
       ctx->nextchr = chr;
       n = strtod(buf, &p);  /* try to read as number */
       if (p != buf && strchr(delimiter, *p)) { return fe_number(ctx, n); }
-      if (!strcmp(buf, "nil")) { return &nil; }
+      if (!strcmp(buf, "nil")) { return &Nil; }
       return fe_symbol(ctx, buf);
   }
 }
@@ -558,10 +570,10 @@ fe_Object* fe_readfp(fe_Context *ctx, FILE *fp) {
 static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Object **bind);
 
 static fe_Object* evallist(fe_Context *ctx, fe_Object *lst, fe_Object *env) {
-  fe_Object *res = &nil;
+  fe_Object *res = &Nil;
   fe_Object **tail = &res;
   while (!isnil(lst)) {
-    *tail = fe_cons(ctx, eval(ctx, fe_nextarg(ctx, &lst), env, NULL), &nil);
+    *tail = fe_cons(ctx, eval(ctx, fe_nextarg(ctx, &lst), env, NULL), &Nil);
     tail = &cdr(*tail);
   }
   return res;
@@ -569,7 +581,7 @@ static fe_Object* evallist(fe_Context *ctx, fe_Object *lst, fe_Object *env) {
 
 
 static fe_Object* dolist(fe_Context *ctx, fe_Object *lst, fe_Object *env) {
-  fe_Object *res = &nil;
+  fe_Object *res = &Nil;
   int save = fe_savegc(ctx);
   while (!isnil(lst)) {
     fe_restoregc(ctx, save);
@@ -626,7 +638,7 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
   gc = fe_savegc(ctx);
   fn = eval(ctx, car(obj), env, NULL);
   arg = cdr(obj);
-  res = &nil;
+  res = &Nil;
 
   switch (type(fn)) {
     case FE_TPRIM:
@@ -777,7 +789,7 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
 
 
 fe_Object* fe_eval(fe_Context *ctx, fe_Object *obj) {
-  return eval(ctx, obj, &nil, NULL);
+  return eval(ctx, obj, &Nil, NULL);
 }
 
 
@@ -796,9 +808,9 @@ fe_Context* fe_open(void *ptr, int size) {
   ctx->object_count = size / sizeof(fe_Object);
 
   /* init lists */
-  ctx->calllist = &nil;
-  ctx->freelist = &nil;
-  ctx->symlist = &nil;
+  ctx->calllist = &Nil;
+  ctx->freelist = &Nil;
+  ctx->symlist = &Nil;
 
   /* populate freelist */
   for (i = 0; i < ctx->object_count; i++) {
@@ -829,26 +841,32 @@ fe_Context* fe_open(void *ptr, int size) {
 void fe_close(fe_Context *ctx) {
   /* clear gcstack and symlist; makes all objects unreachable */
   ctx->gcstack_idx = 0;
-  ctx->symlist = &nil;
+  ctx->symlist = &Nil;
   collectgarbage(ctx);
 }
 
 
 #ifdef FE_STANDALONE
 
+#ifndef __plan9__
 #include <setjmp.h>
+#endif
 
 static jmp_buf toplevel;
 static char buf[64000];
 
 static void onerror(fe_Context *ctx, const char *msg, fe_Object *cl) {
-  unused(ctx), unused(cl);
+  unused(ctx); unused(cl);
   fprintf(stderr, "error: %s\n", msg);
   longjmp(toplevel, -1);
 }
 
-
-int main(int argc, char **argv) {
+#ifdef __plan9__
+void
+#else
+int
+#endif
+main(int argc, char **argv) {
   int gc;
   fe_Object *obj;
   FILE *volatile fp = stdin;
@@ -873,7 +891,11 @@ int main(int argc, char **argv) {
     if (fp == stdin) { fe_writefp(ctx, obj, stdout); printf("\n"); }
   }
 
+#ifdef __plan9__
+  exits(nil);
+#else
   return EXIT_SUCCESS;
+#endif
 }
 
 #endif
