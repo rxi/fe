@@ -657,7 +657,12 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
 
         case P_FN: case P_MAC:
           va = fe_cons(ctx, env, arg);
-          fe_nextarg(ctx, &arg);
+          if (!isnil(vb = fe_nextarg(ctx, &arg))) {
+            checktype(ctx, vb, FE_TPAIR);
+            while (!isnil(vb)) {
+              checktype(ctx, fe_nextarg(ctx, &vb), FE_TSYMBOL);
+            }
+          }
           res = object(ctx);
           settype(res, prim(fn) == P_FN ? FE_TFUNC : FE_TMACRO);
           cdr(res) = va;
