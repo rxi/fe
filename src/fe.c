@@ -581,16 +581,26 @@ static fe_Object* dolist(fe_Context *ctx, fe_Object *lst, fe_Object *env) {
 }
 
 
+static fe_Object* checknoargs(fe_Context *ctx, fe_Object *arg) {
+  if (!isnil(arg)) {
+    fe_error(ctx, "too many arguments");
+  }
+  return arg;
+}
+
+
 static fe_Object* argstoenv(fe_Context *ctx, fe_Object *prm, fe_Object *arg, fe_Object *env) {
   while (!isnil(prm)) {
     if (type(prm) != FE_TPAIR) {
       env = fe_cons(ctx, fe_cons(ctx, prm, arg), env);
+      arg = &nil;
       break;
     }
     env = fe_cons(ctx, fe_cons(ctx, car(prm), fe_car(ctx, arg)), env);
     prm = cdr(prm);
     arg = fe_cdr(ctx, arg);
   }
+  checknoargs(ctx, arg);
   return env;
 }
 
@@ -609,6 +619,7 @@ static fe_Object* argstoenv(fe_Context *ctx, fe_Object *prm, fe_Object *arg, fe_
     va = checktype(ctx, evalarg(), FE_TNUMBER);   \
     vb = checktype(ctx, evalarg(), FE_TNUMBER);   \
     res = fe_bool(ctx, number(va) op number(vb)); \
+    checknoargs(ctx, arg);                        \
   }
 
 
@@ -633,14 +644,17 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
       switch (prim(fn)) {
         case P_LET:
           va = checktype(ctx, fe_nextarg(ctx, &arg), FE_TSYMBOL);
+          vb = fe_nextarg(ctx, &arg);
           if (newenv) {
-            *newenv = fe_cons(ctx, fe_cons(ctx, va, evalarg()), env);
+            *newenv = fe_cons(ctx, fe_cons(ctx, va, eval(ctx, vb, env, NULL)), env);
           }
+          checknoargs(ctx, arg);
           break;
 
         case P_SET:
           va = checktype(ctx, fe_nextarg(ctx, &arg), FE_TSYMBOL);
           cdr(getbound(va, env)) = evalarg();
+          checknoargs(ctx, arg);
           break;
 
         case P_IF:
@@ -679,6 +693,7 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
 
         case P_QUOTE:
           res = fe_nextarg(ctx, &arg);
+          checknoargs(ctx, arg);
           break;
 
         case P_AND:
@@ -696,24 +711,29 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
         case P_CONS:
           va = evalarg();
           res = fe_cons(ctx, va, evalarg());
+          checknoargs(ctx, arg);
           break;
 
         case P_CAR:
           res = fe_car(ctx, evalarg());
+          checknoargs(ctx, arg);
           break;
 
         case P_CDR:
           res = fe_cdr(ctx, evalarg());
+          checknoargs(ctx, arg);
           break;
 
         case P_SETCAR:
           va = checktype(ctx, evalarg(), FE_TPAIR);
           car(va) = evalarg();
+          checknoargs(ctx, arg);
           break;
 
         case P_SETCDR:
           va = checktype(ctx, evalarg(), FE_TPAIR);
           cdr(va) = evalarg();
+          checknoargs(ctx, arg);
           break;
 
         case P_LIST:
@@ -722,15 +742,18 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
 
         case P_NOT:
           res = fe_bool(ctx, isnil(evalarg()));
+          checknoargs(ctx, arg);
           break;
 
         case P_IS:
           va = evalarg();
           res = fe_bool(ctx, equal(va, evalarg()));
+          checknoargs(ctx, arg);
           break;
 
         case P_ATOM:
           res = fe_bool(ctx, fe_type(ctx, evalarg()) != FE_TPAIR);
+          checknoargs(ctx, arg);
           break;
 
         case P_PRINT:
