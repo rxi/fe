@@ -349,7 +349,7 @@ static void writestr(fe_Context *ctx, fe_WriteFn fn, void *udata, const char *s)
   while (*s) { fn(ctx, udata, *s++); }
 }
 
-void fe_write(fe_Context *ctx, fe_Object *obj, fe_WriteFn fn, void *udata, int qt) {
+void write_(fe_Context *ctx, fe_Object *obj, fe_WriteFn fn, void *udata, int qt) {
   char buf[32];
 
   switch (type(obj)) {
@@ -363,22 +363,28 @@ void fe_write(fe_Context *ctx, fe_Object *obj, fe_WriteFn fn, void *udata, int q
       break;
 
     case FE_TPAIR:
+      if (tag(obj) & GCMARKBIT) { writestr(ctx, fn, udata, "..."); break; }
       fn(ctx, udata, '(');
       for (;;) {
-        fe_write(ctx, car(obj), fn, udata, 1);
+        /* mark 'obj' and write car(obj) */
+        fe_Object *tmp = car(obj);
+        tag(obj) |= GCMARKBIT;
+        write_(ctx, tmp, fn, udata, 1);
+        /* write cdr(obj) if isn't circular list */
         obj = cdr(obj);
         if (type(obj) != FE_TPAIR) { break; }
         fn(ctx, udata, ' ');
+        if (tag(obj) & GCMARKBIT) { writestr(ctx, fn, udata, "..."); break; }
       }
-      if (!isnil(obj)) {
+      if (!isnil(obj) && !(tag(obj) & GCMARKBIT)) {
         writestr(ctx, fn, udata, " . ");
-        fe_write(ctx, obj, fn, udata, 1);
+        write_(ctx, obj, fn, udata, 1);
       }
       fn(ctx, udata, ')');
       break;
 
     case FE_TSYMBOL:
-      fe_write(ctx, car(cdr(obj)), fn, udata, 0);
+      write_(ctx, car(cdr(obj)), fn, udata, 0);
       break;
 
     case FE_TSTRING:
@@ -399,6 +405,19 @@ void fe_write(fe_Context *ctx, fe_Object *obj, fe_WriteFn fn, void *udata, int q
       writestr(ctx, fn, udata, buf);
       break;
   }
+}
+
+static void unmarkpairs(fe_Object *obj) {
+  while (!isnil(obj) && (tag(obj) & GCMARKBIT)) {
+    tag(obj) &= ~GCMARKBIT;
+    unmarkpairs(car(obj));
+    obj = cdr(obj);
+  }
+}
+
+void fe_write(fe_Context *ctx, fe_Object *obj, fe_WriteFn fn, void *udata, int qt) {
+  write_(ctx, obj, fn, udata, qt);
+  unmarkpairs(obj);
 }
 
 

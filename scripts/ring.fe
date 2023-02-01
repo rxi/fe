@@ -1,0 +1,4 @@
+(= items (list 1 2 3 4))
+(setcar (cdr items) (cons items (cons 5 items)))
+(setcdr (cdr (cdr (cdr items))) items)
+(print items)
