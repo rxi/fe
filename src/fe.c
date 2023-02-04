@@ -744,7 +744,9 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
         case P_MUL: arithop(a * b); break;
         case P_DIV: arithop(a / b); break;
         case P_MOD: arithop(a - b * (long) (a / b)); break;
-        case P_IDIV: arithop((long) (a / b)); break;
+        case P_IDIV:
+          arithop(b ? (long) (a / b) : (fe_error(ctx, "divide by zero"), a));
+          break;
       }
       break;
 
