@@ -26,14 +26,20 @@
 #define unused(x)     ( (void) (x) )
 #define car(x)        ( (x)->car.o )
 #define cdr(x)        ( (x)->cdr.o )
-#define tag(x)        ( (x)->car.c )
 #define isnil(x)      ( (x) == &nil )
 #define type(x)       ( tag(x) & 0x1 ? tag(x) >> 2 : FE_TPAIR )
 #define settype(x,t)  ( tag(x) = (t) << 2 | 1 )
 #define number(x)     ( (x)->cdr.n )
-#define prim(x)       ( (x)->cdr.c )
 #define cfunc(x)      ( (x)->cdr.f )
-#define strbuf(x)     ( &(x)->car.c + 1 )
+#define prim(x)       ( *(x)->cdr.s )
+
+#ifdef FE_BIGENDIAN
+#define tag(x)        ( (x)->car.s[STRBUFSIZE] )
+#define strbuf(x)     ( (x)->car.s )
+#else
+#define tag(x)        ( *(x)->car.s )
+#define strbuf(x)     ( (x)->car.s + 1 )
+#endif
 
 #define STRBUFSIZE    ( (int) sizeof(fe_Object*) - 1 )
 #define GCMARKBIT     ( 0x2 )
@@ -57,7 +63,7 @@ static const char *typenames[] = {
   "func", "macro", "prim", "cfunc", "ptr"
 };
 
-typedef union { fe_Object *o; fe_CFunc f; fe_Number n; char c; } Value;
+typedef union { fe_Object *o; fe_CFunc f; fe_Number n; char s[STRBUFSIZE + 1]; } Value;
 
 struct fe_Object { Value car, cdr; };
 

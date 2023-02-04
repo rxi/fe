@@ -19,7 +19,7 @@ fe_Context *ctx = fe_open(data, size);
 fe_close(ctx);
 free(data);
 ```
-
+If you are building a project on a big-endian system, you must `#define FE_BIGENDIAN` before compiling. 
 
 ## Running a script
 To run a script it should first be read then evaluated; this should be
