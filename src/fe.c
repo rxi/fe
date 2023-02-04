@@ -49,7 +49,7 @@ enum {
 static const char *primnames[] = {
   "let", "=", "if", "fn", "mac", "while", "quote", "and", "or", "do", "cons",
   "car", "cdr", "setcar", "setcdr", "list", "not", "is", "atom", "print", "<",
-  "<=", "+", "-", "*", "/", "mod", "div"
+  "<=", "+", "-", "*", "/", "%", "//"
 };
 
 static const char *typenames[] = {
