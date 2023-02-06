@@ -51,7 +51,7 @@ fclose(fp);
 
 
 ## Calling a function
-A function can be called by creating a list and evaulating it; for
+A function can be called by creating a list and evaluating it; for
 example, we could add two numbers using the `+` function:
 
 ```c
