@@ -513,7 +513,7 @@ static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
         if (chr == '\0') { fe_error(ctx, "unclosed string"); }
         if (chr == '\\') {
           chr = fn(ctx, udata);
-          if (strchr("\\nrt", chr)) { chr = strchr("\\\\n\nr\rt\t", chr)[1]; }
+          if (strchr("nrt", chr)) { chr = strchr("n\nr\rt\t", chr)[1]; }
         }
         v = buildstring(ctx, v, chr);
         chr = fn(ctx, udata);
