@@ -141,3 +141,9 @@ Multiplies all its arguments.
 
 ##### (/ ...)
 Divides all its arguments, left-to-right.
+
+##### (% ...)
+Sequentially gets the remainder of the division of its arguments, left-to-right.
+
+##### (// ...)
+Integer divides all its arguments, left-to-right.
