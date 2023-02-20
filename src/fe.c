@@ -41,15 +41,15 @@
 
 
 enum {
- P_LET, P_SET, P_IF, P_FN, P_MAC, P_WHILE, P_QUOTE, P_AND, P_OR, P_DO, P_CONS,
- P_CAR, P_CDR, P_SETCAR, P_SETCDR, P_LIST, P_NOT, P_IS, P_ATOM, P_PRINT, P_LT,
- P_LTE, P_ADD, P_SUB, P_MUL, P_DIV, P_MAX
+  P_LET, P_SET, P_IF, P_FN, P_MAC, P_WHILE, P_QUOTE, P_AND, P_OR, P_DO, P_CONS,
+  P_CAR, P_CDR, P_SETCAR, P_SETCDR, P_LIST, P_NOT, P_IS, P_ATOM, P_PRINT, P_LT,
+  P_LTE, P_ADD, P_SUB, P_MUL, P_DIV, P_MOD, P_IDIV, P_MAX
 };
 
 static const char *primnames[] = {
   "let", "=", "if", "fn", "mac", "while", "quote", "and", "or", "do", "cons",
   "car", "cdr", "setcar", "setcdr", "list", "not", "is", "atom", "print", "<",
-  "<=", "+", "-", "*", "/"
+  "<=", "+", "-", "*", "/", "%", "//"
 };
 
 static const char *typenames[] = {
@@ -597,12 +597,13 @@ static fe_Object* argstoenv(fe_Context *ctx, fe_Object *prm, fe_Object *arg, fe_
 
 #define evalarg() eval(ctx, fe_nextarg(ctx, &arg), env, NULL)
 
-#define arithop(op) {                             \
-    fe_Number x = fe_tonumber(ctx, evalarg());    \
+#define arithop(expr) {                           \
+    fe_Number a = fe_tonumber(ctx, evalarg());    \
     while (!isnil(arg)) {                         \
-      x = x op fe_tonumber(ctx, evalarg());       \
+      fe_Number b = fe_tonumber(ctx, evalarg());  \
+      a = expr;                                   \
     }                                             \
-    res = fe_number(ctx, x);                      \
+    res = fe_number(ctx, a);                      \
   }
 
 #define numcmpop(op) {                            \
@@ -738,10 +739,14 @@ static fe_Object* eval(fe_Context *ctx, fe_Object *obj, fe_Object *env, fe_Objec
 
         case P_LT: numcmpop(<); break;
         case P_LTE: numcmpop(<=); break;
-        case P_ADD: arithop(+); break;
-        case P_SUB: arithop(-); break;
-        case P_MUL: arithop(*); break;
-        case P_DIV: arithop(/); break;
+        case P_ADD: arithop(a + b); break;
+        case P_SUB: arithop(a - b); break;
+        case P_MUL: arithop(a * b); break;
+        case P_DIV: arithop(a / b); break;
+        case P_MOD: arithop(a - b * (long) (a / b)); break;
+        case P_IDIV:
+          arithop(b ? (long) (a / b) : (fe_error(ctx, "divide by zero"), a));
+          break;
       }
       break;
 
