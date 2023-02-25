@@ -26,25 +26,20 @@
 #define unused(x)     ( (void) (x) )
 #define car(x)        ( (x)->car.o )
 #define cdr(x)        ( (x)->cdr.o )
+#define tag(x)        ( (x)->car.s[!endian.c * STRBUFSIZE] )
 #define isnil(x)      ( (x) == &nil )
 #define type(x)       ( tag(x) & 0x1 ? tag(x) >> 2 : FE_TPAIR )
 #define settype(x,t)  ( tag(x) = (t) << 2 | 1 )
 #define number(x)     ( (x)->cdr.n )
+#define prim(x)       ( (x)->cdr.s[!endian.c * STRBUFSIZE] )
 #define cfunc(x)      ( (x)->cdr.f )
-#define prim(x)       ( *(x)->cdr.s )
-
-#ifdef FE_BIGENDIAN
-#define tag(x)        ( (x)->car.s[STRBUFSIZE] )
-#define strbuf(x)     ( (x)->car.s )
-#else
-#define tag(x)        ( *(x)->car.s )
-#define strbuf(x)     ( (x)->car.s + 1 )
-#endif
+#define strbuf(x)     ( (x)->car.s + endian.c )
 
 #define STRBUFSIZE    ( (int) sizeof(fe_Object*) - 1 )
 #define GCMARKBIT     ( 0x2 )
 #define GCSTACKSIZE   ( 256 )
 
+static const union { size_t u; char c; } endian = { 0x1 };
 
 enum {
  P_LET, P_SET, P_IF, P_FN, P_MAC, P_WHILE, P_QUOTE, P_AND, P_OR, P_DO, P_CONS,
