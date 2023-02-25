@@ -148,8 +148,6 @@ to keep the implementation terse, but should not hinder normal usage:
 * The garbage collector recurses on the `CAR` of objects thus deeply nested
   `CAR`s may overflow the C stack — an object's `CDR` is looped on and will not
   overflow the stack
-* The storage of an object's type and GC mark assumes a little-endian system and
-  will not work correctly on systems of other endianness
 * Proper tailcalls are not implemented — `while` can be used for iterating over
   lists
 * Strings are null-terminated and therefor not binary safe
