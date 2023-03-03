@@ -454,7 +454,7 @@ void fe_set(fe_Context *ctx, fe_Object *sym, fe_Object *v) {
 static fe_Object rparen;
 
 static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
-  const char *delimiter = " \n\t\r();";
+  const char *delimiter = " \n\t\r\"'();";
   fe_Object *v, *res, **tail;
   fe_Number n;
   int chr, gc;
