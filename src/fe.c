@@ -809,11 +809,11 @@ fe_Context* fe_open(void *ptr, int size) {
   }
 
   /* init objects */
+  save = fe_savegc(ctx);
   ctx->t = fe_symbol(ctx, "t");
   fe_set(ctx, ctx->t, ctx->t);
 
   /* register built in primitives */
-  save = fe_savegc(ctx);
   for (i = 0; i < P_MAX; i++) {
     fe_Object *v = object(ctx);
     settype(v, FE_TPRIM);
