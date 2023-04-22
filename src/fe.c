@@ -454,7 +454,7 @@ void fe_set(fe_Context *ctx, fe_Object *sym, fe_Object *v) {
 static fe_Object rparen;
 
 static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
-  const char *delimiter = " \n\t\r();";
+  const char *delimiter = " \n\t\r\"'();";
   fe_Object *v, *res, **tail;
   fe_Number n;
   int chr, gc;
@@ -474,7 +474,7 @@ static fe_Object* read_(fe_Context *ctx, fe_ReadFn fn, void *udata) {
       return NULL;
 
     case ';':
-      while (chr && chr != '\n') { chr = fn(ctx, udata); }
+      while (chr && chr != '\n' && chr != '\r') { chr = fn(ctx, udata); }
       return read_(ctx, fn, udata);
 
     case ')':
@@ -809,11 +809,11 @@ fe_Context* fe_open(void *ptr, int size) {
   }
 
   /* init objects */
+  save = fe_savegc(ctx);
   ctx->t = fe_symbol(ctx, "t");
   fe_set(ctx, ctx->t, ctx->t);
 
   /* register built in primitives */
-  save = fe_savegc(ctx);
   for (i = 0; i < P_MAX; i++) {
     fe_Object *v = object(ctx);
     settype(v, FE_TPRIM);
